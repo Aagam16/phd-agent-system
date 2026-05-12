@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhD Agent System — Influencer Marketing Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0eff8;
+    --text2: #9896b0;
+    --text3: #5c5a72;
+    --accent-task: #7c6af7;
+    --accent-paper: #3ecf8e;
+    --accent-guide: #f5a623;
+    --accent-task-dim: rgba(124,106,247,0.12);
+    --accent-paper-dim: rgba(62,207,142,0.12);
+    --accent-guide-dim: rgba(245,166,35,0.12);
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'Sora', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+  body { min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* HEADER */
+  header {
+    padding: 2rem 2.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo { display: flex; flex-direction: column; gap: 2px; }
+  .logo-title { font-family: var(--font-display); font-size: 1.5rem; color: var(--text); letter-spacing: -0.01em; }
+  .logo-sub { font-size: 12px; color: var(--text3); font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 100px;
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    font-size: 12px; color: var(--text2); font-family: var(--font-mono);
+    white-space: nowrap;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #f5a623; flex-shrink: 0; transition: background .3s; }
+  .status-dot.live { background: #3ecf8e; box-shadow: 0 0 6px #3ecf8e88; }
+
+  /* LAYOUT */
+  main { flex: 1; display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 80px); }
+
+  /* SIDEBAR */
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 0;
+    display: flex; flex-direction: column; gap: 4px;
+    background: var(--bg);
+  }
+  .aside-label { font-size: 10px; font-family: var(--font-mono); color: var(--text3); letter-spacing: .1em; text-transform: uppercase; padding: 0 1.25rem; margin-bottom: 4px; margin-top: 12px; }
+  .aside-label:first-child { margin-top: 0; }
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 1.25rem; cursor: pointer;
+    background: none; border: none; color: var(--text2);
+    font-family: var(--font-body); font-size: 13.5px; text-align: left;
+    border-left: 2px solid transparent; transition: all .15s; width: 100%;
+  }
+  .nav-btn:hover { color: var(--text); background: var(--bg3); }
+  .nav-btn.active { color: var(--text); background: var(--bg3); }
+  .nav-btn.active.task { border-left-color: var(--accent-task); color: var(--accent-task); }
+  .nav-btn.active.paper { border-left-color: var(--accent-paper); color: var(--accent-paper); }
+  .nav-btn.active.guide { border-left-color: var(--accent-guide); color: var(--accent-guide); }
+  .nav-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .nav-btn.active.task .nav-icon { background: var(--accent-task-dim); }
+  .nav-btn.active.paper .nav-icon { background: var(--accent-paper-dim); }
+  .nav-btn.active.guide .nav-icon { background: var(--accent-guide-dim); }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 8px 1.25rem; }
+  .msg-counter {
+    margin-left: auto; font-size: 11px; font-family: var(--font-mono);
+    background: var(--bg2); padding: 2px 7px; border-radius: 100px;
+    border: 1px solid var(--border); color: var(--text3);
+  }
+  .msg-counter.has-msgs { color: var(--text2); border-color: var(--border2); }
+
+  /* CONTENT */
+  .content { display: flex; flex-direction: column; background: var(--bg2); }
+  .panel { display: none; flex-direction: column; height: 100%; }
+  .panel.active { display: flex; }
+
+  /* PANEL HEADER */
+  .panel-head {
+    padding: 1.5rem 2rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg2);
+  }
+  .panel-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .panel-icon.task { background: var(--accent-task-dim); }
+  .panel-icon.paper { background: var(--accent-paper-dim); }
+  .panel-icon.guide { background: var(--accent-guide-dim); }
+  .panel-name { font-size: 16px; font-weight: 600; color: var(--text); }
+  .panel-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .ctx-badge {
+    margin-left: auto; display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-family: var(--font-mono); color: var(--text3);
+    padding: 4px 10px; border-radius: 100px; border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .ctx-badge.loaded { color: var(--accent-paper); border-color: rgba(62,207,142,0.25); }
+  .ctx-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* CHAT AREA */
+  .chat-scroll { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+  .chat-scroll::-webkit-scrollbar { width: 4px; }
+  .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+  .chat-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .msg-wrap { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+  .msg-wrap.user { align-items: flex-end; }
+  .msg-wrap.assistant { align-items: flex-start; }
+  .msg-label { font-size: 11px; font-family: var(--font-mono); color: var(--text3); padding: 0 4px; }
+
+  .bubble {
+    padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.7;
+    max-width: 82%; white-space: pre-wrap; word-wrap: break-word;
+  }
+  .bubble.user { background: var(--bg3); border: 1px solid var(--border2); border-bottom-right-radius: 4px; color: var(--text); }
+  .bubble.assistant { background: var(--bg); border: 1px solid var(--border); border-bottom-left-radius: 4px; color: var(--text); }
+  .bubble.task-bubble { border-left: 2px solid var(--accent-task); }
+  .bubble.paper-bubble { border-left: 2px solid var(--accent-paper); }
+  .bubble.guide-bubble { border-left: 2px solid var(--accent-guide); }
+
+  .typing { display: flex; align-items: center; gap: 5px; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 4px; width: fit-content; }
+  .typing span { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); animation: bounce 1.3s infinite; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
+
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 2rem; }
+  .empty-icon { font-size: 2.5rem; opacity: .25; }
+  .empty-title { font-family: var(--font-display); font-size: 1.25rem; color: var(--text2); }
+  .empty-sub { font-size: 13px; color: var(--text3); max-width: 280px; line-height: 1.6; }
+
+  /* CHIPS */
+  .chips-area { padding: .875rem 2rem .5rem; border-top: 1px solid var(--border); background: var(--bg2); }
+  .chips-label { font-size: 10px; font-family: var(--font-mono); color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    padding: 4px 11px; border-radius: 100px; border: 1px solid var(--border2);
+    font-size: 12px; color: var(--text2); cursor: pointer;
+    background: var(--bg3); transition: all .12s; font-family: var(--font-body);
+  }
+  .chip:hover { border-color: var(--border2); color: var(--text); background: var(--bg); }
+  .chip.task:hover { border-color: var(--accent-task); color: var(--accent-task); }
+  .chip.paper:hover { border-color: var(--accent-paper); color: var(--accent-paper); }
+  .chip.guide-chip:hover { border-color: var(--accent-guide); color: var(--accent-guide); }
+
+  /* INPUT */
+  .input-area { padding: 1rem 2rem 1.25rem; background: var(--bg2); border-top: 1px solid var(--border); }
+  .input-row { display: flex; gap: 8px; align-items: flex-end; }
+  .input-row textarea {
+    flex: 1; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 10px; color: var(--text); font-family: var(--font-body);
+    font-size: 13.5px; padding: 10px 14px; resize: none; outline: none;
+    line-height: 1.6; min-height: 42px; max-height: 120px; transition: border-color .15s;
+  }
+  .input-row textarea:focus { border-color: rgba(255,255,255,0.2); }
+  .input-row textarea::placeholder { color: var(--text3); }
+  .send-btn {
+    width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--border2);
+    background: var(--bg3); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; transition: all .15s; color: var(--text2); font-size: 16px;
+  }
+  .send-btn:hover { background: var(--bg); color: var(--text); border-color: rgba(255,255,255,.2); }
+  .send-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .send-btn.task-send:hover { background: var(--accent-task-dim); color: var(--accent-task); border-color: var(--accent-task); }
+  .send-btn.paper-send:hover { background: var(--accent-paper-dim); color: var(--accent-paper); border-color: var(--accent-paper); }
+  .send-btn.guide-send:hover { background: var(--accent-guide-dim); color: var(--accent-guide); border-color: var(--accent-guide); }
+
+  /* GUIDE SPECIAL */
+  .guide-paste-area { padding: 1rem 2rem; border-top: 1px solid var(--border); background: var(--bg2); }
+  .guide-paste-label { font-size: 10px; font-family: var(--font-mono); color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+  .guide-paste-area textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 10px; color: var(--text); font-family: var(--font-body);
+    font-size: 13px; padding: 10px 14px; resize: vertical; outline: none;
+    line-height: 1.6; min-height: 80px; transition: border-color .15s;
+  }
+  .guide-paste-area textarea:focus { border-color: rgba(255,255,255,.2); }
+  .guide-paste-area textarea::placeholder { color: var(--text3); }
+  .guide-review-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .review-btn {
+    padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text2); font-family: var(--font-body);
+    font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px;
+    transition: all .15s;
+  }
+  .review-btn:hover { background: var(--accent-guide-dim); color: var(--accent-guide); border-color: rgba(245,166,35,.3); }
+
+  /* HINT */
+  .hint { font-size: 11px; color: var(--text3); margin-top: 6px; font-family: var(--font-mono); }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    main { grid-template-columns: 1fr; }
+    aside { flex-direction: row; overflow-x: auto; padding: .75rem; border-right: none; border-bottom: 1px solid var(--border); gap: 4px; }
+    .aside-label { display: none; }
+    .sidebar-divider { display: none; }
+    .nav-btn { border-left: none; border-bottom: 2px solid transparent; padding: 6px 12px; white-space: nowrap; border-radius: 8px; }
+    .nav-btn.active.task { border-bottom-color: var(--accent-task); border-left: none; }
+    .nav-btn.active.paper { border-bottom-color: var(--accent-paper); border-left: none; }
+    .nav-btn.active.guide { border-bottom-color: var(--accent-guide); border-left: none; }
+    header { padding: 1rem 1.25rem; }
+    .panel-head { padding: 1rem 1.25rem; }
+    .chat-scroll { padding: 1rem 1.25rem; }
+    .chips-area, .input-area, .guide-paste-area { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .bubble { max-width: 95%; }
+    .ctx-badge { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-title">PhD Agent System</div>
+    <div class="logo-sub">S-O-R · Influencer Marketing · Surat</div>
+  </div>
+  <div class="status-pill">
+    <div class="status-dot" id="global-dot"></div>
+    <span id="global-status">Ready</span>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <div class="aside-label">Agents</div>
+    <button class="nav-btn active task" onclick="switchAgent('task')" id="nav-task">
+      <div class="nav-icon">🧠</div>
+      <span>Task Agent</span>
+      <span class="msg-counter" id="ctr-task">0</span>
+    </button>
+    <button class="nav-btn paper" onclick="switchAgent('paper')" id="nav-paper">
+      <div class="nav-icon">📄</div>
+      <span>Paper Maker</span>
+      <span class="msg-counter" id="ctr-paper">0</span>
+    </button>
+    <button class="nav-btn guide" onclick="switchAgent('guide')" id="nav-guide">
+      <div class="nav-icon">🛡️</div>
+      <span>Guide / Review</span>
+      <span class="msg-counter" id="ctr-guide">0</span>
+    </button>
+    <div class="sidebar-divider"></div>
+    <div class="aside-label">Session</div>
+    <button class="nav-btn" onclick="clearAll()" style="font-size:12px; color: var(--text3);">
+      <div class="nav-icon">🗑️</div>
+      <span>Clear all chats</span>
+    </button>
+  </aside>
+
+  <div class="content">
+
+    <!-- TASK AGENT -->
+    <div class="panel active" id="panel-task">
+      <div class="panel-head">
+        <div class="panel-icon task">🧠</div>
+        <div>
+          <div class="panel-name">PhD Task Agent</div>
+          <div class="panel-desc">Hypotheses · Survey items · Operationalisation · Methodology · Chapter outline</div>
+        </div>
+        <div class="ctx-badge" id="ctx-task">
+          <div class="ctx-dot"></div> Context pending
+        </div>
+      </div>
+      <div class="chat-scroll" id="chat-task">
+        <div class="empty-state" id="empty-task">
+          <div class="empty-icon">🧠</div>
+          <div class="empty-title">Task Agent ready</div>
+          <div class="empty-sub">Click a quick task below or type your own. Your full S-O-R context loads automatically on first message.</div>
+        </div>
+      </div>
+      <div class="chips-area">
+        <div class="chips-label">Quick tasks</div>
+        <div class="chips">
+          <span class="chip task" onclick="fillAndSend('task','Write all hypothesis statements H1–H13 with theoretical justification for each path in the confirmed S-O-R model')">H1–H13 hypotheses</span>
+          <span class="chip task" onclick="fillAndSend('task','Draft 5 survey items for each of the 4 stimulus constructs S1–S4 using 7-point Likert scale with scale sources')">Survey items S1–S4</span>
+          <span class="chip task" onclick="fillAndSend('task','Create a full construct operationalisation table for all S-O-R variables: construct, definition, scale source, number of items')">Operationalisation table</span>
+          <span class="chip task" onclick="fillAndSend('task','Write a detailed PhD thesis chapter outline with section titles and brief descriptions')">Thesis chapter outline</span>
+          <span class="chip task" onclick="fillAndSend('task','Formally justify sample size of 350–450 for PLS-SEM statistically and methodologically')">Sample size justification</span>
+          <span class="chip task" onclick="fillAndSend('task','Explain discriminant validity overlap risk between Relatability S4 and FOMO O3 and how to address it in PLS-SEM')">Discriminant validity risk</span>
+          <span class="chip task" onclick="fillAndSend('task','Design the pilot study: sample size, procedure, pre-test goals, and analysis plan')">Pilot study design</span>
+          <span class="chip task" onclick="fillAndSend('task','List all PLS-SEM assessment steps in correct sequence for SmartPLS 4.0 with thresholds for each step')">PLS-SEM steps in order</span>
+          <span class="chip task" onclick="fillAndSend('task','Draft 5 survey items for Trust O1 and 5 for Cognitive Absorption O2 using validated scales')">Survey items O1 & O2</span>
+          <span class="chip task" onclick="fillAndSend('task','Explain the moderating role of Age cohort M1 and how to test it in PLS-SEM using multi-group analysis')">Moderator: Age cohort</span>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-row">
+          <textarea id="in-task" placeholder="Type any PhD task…" rows="1" onkeydown="handleKey(event,'task')"></textarea>
+          <button class="send-btn task-send" id="btn-task" onclick="sendMsg('task')" title="Send">➤</button>
+        </div>
+        <div class="hint">↵ to send · Shift+↵ new line · Context sent once per session</div>
+      </div>
+    </div>
+
+    <!-- PAPER MAKER -->
+    <div class="panel" id="panel-paper">
+      <div class="panel-head">
+        <div class="panel-icon paper">📄</div>
+        <div>
+          <div class="panel-name">Research Paper Maker</div>
+          <div class="panel-desc">Academic sections · APA citations · PhD thesis / journal style</div>
+        </div>
+        <div class="ctx-badge" id="ctx-paper">
+          <div class="ctx-dot"></div> Context pending
+        </div>
+      </div>
+      <div class="chat-scroll" id="chat-paper">
+        <div class="empty-state" id="empty-paper">
+          <div class="empty-icon">📄</div>
+          <div class="empty-title">Paper Maker ready</div>
+          <div class="empty-sub">Choose a section to write or describe what you need. Writes in scholarly APA journal style.</div>
+        </div>
+      </div>
+      <div class="chips-area">
+        <div class="chips-label">Quick sections</div>
+        <div class="chips">
+          <span class="chip paper" onclick="fillAndSend('paper','Write a 250-word abstract for this research paper including purpose, method, expected findings, and contribution')">Abstract</span>
+          <span class="chip paper" onclick="fillAndSend('paper','Write the introduction section: research background, research gap, purpose statement, and paper structure overview')">Introduction</span>
+          <span class="chip paper" onclick="fillAndSend('paper','Write the S-O-R theoretical framework section citing Mehrabian and Russell 1974 and Jacoby 2002, mapping constructs to this research')">S-O-R framework</span>
+          <span class="chip paper" onclick="fillAndSend('paper','Write a literature review section on FOMO in influencer marketing citing Przybylski et al 2013, Dinh et al 2023, Nguyen et al 2024')">Lit review: FOMO</span>
+          <span class="chip paper" onclick="fillAndSend('paper','Write a literature review section on Cognitive Absorption grounded in Flow Theory Csikszentmihalyi 1990 applied to social media influencer content')">Lit review: Cognitive Absorption</span>
+          <span class="chip paper" onclick="fillAndSend('paper','Write a theoretical background section on Source Credibility Theory Ohanian 1990 and ELM Petty and Cacioppo 1986 applied to influencer marketing')">Source Credibility + ELM</span>
+          <span class="chip paper" onclick="fillAndSend('paper','Write the research methodology section: philosophical stance, quantitative deductive approach, PLS-SEM rationale, sampling strategy, and measurement design')">Methodology section</span>
+          <span class="chip paper" onclick="fillAndSend('paper','Write a literature review on Parasocial Interaction theory Horton and Wohl 1956 and its role in influencer-follower relationships')">Lit review: Parasocial</span>
+          <span class="chip paper" onclick="fillAndSend('paper','Write the conclusion section: theoretical contributions, managerial implications, limitations, and future research directions')">Conclusion</span>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-row">
+          <textarea id="in-paper" placeholder="Describe a section to write…" rows="1" onkeydown="handleKey(event,'paper')"></textarea>
+          <button class="send-btn paper-send" id="btn-paper" onclick="sendMsg('paper')" title="Send">➤</button>
+        </div>
+        <div class="hint">↵ to send · Shift+↵ new line · Context sent once per session</div>
+      </div>
+    </div>
+
+    <!-- GUIDE -->
+    <div class="panel" id="panel-guide">
+      <div class="panel-head">
+        <div class="panel-icon guide">🛡️</div>
+        <div>
+          <div class="panel-name">Guide / Supervisor Agent</div>
+          <div class="panel-desc">Reviews work from other agents · S-O-R consistency · Academic quality · Citations</div>
+        </div>
+        <div class="ctx-badge" id="ctx-guide">
+          <div class="ctx-dot"></div> Context pending
+        </div>
+      </div>
+      <div class="chat-scroll" id="chat-guide">
+        <div class="empty-state" id="empty-guide">
+          <div class="empty-icon">🛡️</div>
+          <div class="empty-title">Supervisor ready</div>
+          <div class="empty-sub">Paste output from the Task Agent or Paper Maker below, choose a review type, and get supervisor-level feedback.</div>
+        </div>
+      </div>
+      <div class="guide-paste-area">
+        <div class="guide-paste-label">Paste work to review</div>
+        <textarea id="guide-paste" placeholder="Paste output from Task Agent, Paper Maker, or your own writing here…"></textarea>
+        <div class="guide-review-btns">
+          <button class="review-btn" onclick="sendReview('S-O-R consistency check: identify any constructs, paths, or hypotheses that contradict the confirmed model. Be specific, cite the exact problematic sentence.')">✓ S-O-R consistency</button>
+          <button class="review-btn" onclick="sendReview('Academic quality review: assess scholarly writing standard, argument structure, hedging language, coherence. Rate out of 10 and give specific improvement points.')">★ Academic quality</button>
+          <button class="review-btn" onclick="sendReview('Full supervisor review. Structure as: SUMMARY / ISSUES FOUND (numbered) / SUGGESTIONS FOR IMPROVEMENT. Be rigorous but constructive.')">👁 Full supervisor review</button>
+          <button class="review-btn" onclick="sendReview('Citation audit: check all citations against the confirmed reference list, flag missing citations on unsupported claims, and note APA format errors.')">📚 Citation audit</button>
+          <button class="review-btn" onclick="sendReview('Gap analysis: what is missing from this work? What should be added to make it publication-ready?')">⊕ Gap analysis</button>
+        </div>
+      </div>
+      <div class="input-area">
+        <div class="input-row">
+          <textarea id="in-guide" placeholder="Or ask the supervisor a direct question…" rows="1" onkeydown="handleKey(event,'guide')"></textarea>
+          <button class="send-btn guide-send" id="btn-guide" onclick="sendMsg('guide')" title="Send">➤</button>
+        </div>
+        <div class="hint">↵ to send · Shift+↵ new line · Context sent once per session</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const PHD_CTX = `[PhD RESEARCH CONTEXT — READ FULLY]
+Title: "Impact of social media influencer marketing on young consumers' purchase intention for beauty and lifestyle products — S-O-R framework"
+Researcher: PhD student, Surat, Gujarat, India. Stage: conceptual model development + literature review.
+
+CONFIRMED S-O-R MODEL (do not alter):
+S (Stimuli): S1=Influencer Expertise, S2=Influencer Authenticity, S3=Perceived Attractiveness, S4=Relatability/Homophily
+O (Organism): O1=Trust, O2=Cognitive Absorption, O3=FOMO (Fear of Missing Out)
+R (Response): R1=Purchase Intention (primary), R2=eWOM Intention (secondary)
+
+8 SELECTIVE S→O PATHS (all-to-all rejected per Jacoby 2002):
+H1: Expertise→Trust | H2: Expertise→Cognitive Absorption
+H3: Authenticity→Trust | H4: Authenticity→FOMO
+H5: Attractiveness→Cognitive Absorption | H6: Attractiveness→FOMO
+H7: Relatability→FOMO | H8: Relatability→Cognitive Absorption
+O→R: H9:Trust→PI | H10:Trust→eWOM | H11:CogAbs→PI | H12:FOMO→PI | H13:FOMO→eWOM
+Moderators: M1=Age cohort(GenZ/Millennials) | M2=Product involvement | M3=Platform(Instagram/TikTok/YouTube)
+
+Theories: S-O-R(Mehrabian&Russell1974), SourceCredibility(Ohanian1990), ELM(Petty&Cacioppo1986), SocialComparison(Festinger1954), Flow(Csikszentmihalyi1990), ParasocialInteraction(Horton&Wohl1956)
+Method: PLS-SEM primary(SmartPLS4.0), CB-SEM secondary, 7-pt Likert, n=350–450 age18–35
+Quality thresholds: α≥0.70, CR≥0.70, AVE≥0.50, HTMT<0.85
+LOCKED DECISIONS: Never suggest TAM/TPB/ATB/12-path model unless explicitly asked.`;
+
+const SYSTEM_PROMPTS = {
+  task: `You are the PhD Task Agent — an ultra-expert research assistant for this specific PhD. Complete every task with academic rigour, precision, and publication-ready quality. Always stay consistent with the confirmed S-O-R model. Be specific, practical, and thorough.\n\n`,
+  paper: `You are the Research Paper Maker — you write polished academic content at PhD thesis and journal article standard. Use formal scholarly prose, appropriate hedging language, logical argument structure, and cite from the confirmed reference list in APA format. Every section should be ready to submit.\n\n`,
+  guide: `You are the PhD Supervisor Agent — a rigorous but supportive reviewer. You check work against the confirmed S-O-R model, assess academic quality, verify citation use, and give specific actionable feedback. Structure feedback clearly. Be honest about issues but always constructive.\n\n`
+};
+
+const histories = { task: [], paper: [], guide: [] };
+const ctxSent = { task: false, paper: false, guide: false };
+const msgCounts = { task: 0, paper: 0, guide: 0 };
+
+function switchAgent(agent) {
+  ['task','paper','guide'].forEach(a => {
+    document.getElementById('panel-'+a).classList.toggle('active', a===agent);
+    document.getElementById('nav-'+a).classList.toggle('active', a===agent);
+  });
+}
+
+function handleKey(e, agent) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(agent); }
+}
+
+function fillAndSend(agent, text) {
+  switchAgent(agent);
+  document.getElementById('in-'+agent).value = text;
+  sendMsg(agent);
+}
+
+function buildPrompt(agent, userMsg) {
+  if (!ctxSent[agent]) {
+    return PHD_CTX + '\n\n' + SYSTEM_PROMPTS[agent] + userMsg;
+  }
+  return SYSTEM_PROMPTS[agent] + userMsg;
+}
+
+function markCtxSent(agent) {
+  if (!ctxSent[agent]) {
+    ctxSent[agent] = true;
+    const badge = document.getElementById('ctx-'+agent);
+    badge.className = 'ctx-badge loaded';
+    badge.innerHTML = '<div class="ctx-dot"></div> Context loaded';
+  }
+}
+
+function updateCounter(agent) {
+  msgCounts[agent]++;
+  const el = document.getElementById('ctr-'+agent);
+  el.textContent = msgCounts[agent];
+  el.classList.add('has-msgs');
+}
+
+function removeEmpty(agent) {
+  const el = document.getElementById('empty-'+agent);
+  if (el) el.remove();
+}
+
+function appendBubble(agent, role, text) {
+  removeEmpty(agent);
+  const chat = document.getElementById('chat-'+agent);
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ' + role;
+  const label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = role === 'user' ? 'You' : agent.charAt(0).toUpperCase()+agent.slice(1)+' Agent';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + role + (role==='assistant' ? ' '+agent+'-bubble' : '');
+  bubble.textContent = text;
+  wrap.appendChild(label);
+  wrap.appendChild(bubble);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  return bubble;
+}
+
+function showTyping(agent) {
+  removeEmpty(agent);
+  const chat = document.getElementById('chat-'+agent);
+  const el = document.createElement('div');
+  el.className = 'typing'; el.id = 'typing-'+agent;
+  el.innerHTML = '<span></span><span></span><span></span>';
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping(agent) {
+  const el = document.getElementById('typing-'+agent);
+  if (el) el.remove();
+}
+
+function setGlobalStatus(text, live) {
+  document.getElementById('global-status').textContent = text;
+  document.getElementById('global-dot').classList.toggle('live', live);
+}
+
+async function callAPI(agent, userMsg) {
+  const fullMsg = buildPrompt(agent, userMsg);
+  markCtxSent(agent);
+  histories[agent].push({ role: 'user', content: fullMsg });
+
+  const btn = document.getElementById('btn-'+agent);
+  btn.disabled = true;
+  setGlobalStatus('Thinking…', true);
+  showTyping(agent);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: histories[agent]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const reply = data.content?.find(b => b.type==='text')?.text || 'No response.';
+    histories[agent].push({ role: 'assistant', content: reply });
+    removeTyping(agent);
+    appendBubble(agent, 'assistant', reply);
+    updateCounter(agent);
+    setGlobalStatus('Ready', false);
+  } catch(err) {
+    removeTyping(agent);
+    appendBubble(agent, 'assistant', '⚠ Error: ' + err.message + '\n\nMake sure AI-powered artifacts are enabled in Claude settings.');
+    setGlobalStatus('Error', false);
+  }
+  btn.disabled = false;
+}
+
+function sendMsg(agent) {
+  const el = document.getElementById('in-'+agent);
+  const text = el.value.trim();
+  if (!text) return;
+  el.value = '';
+  el.style.height = 'auto';
+  appendBubble(agent, 'user', text);
+  callAPI(agent, text);
+}
+
+function sendReview(instruction) {
+  const work = document.getElementById('guide-paste').value.trim();
+  if (!work) { alert('Please paste some work to review first.'); return; }
+  const combined = instruction + '\n\nWORK TO REVIEW:\n\n' + work;
+  appendBubble('guide', 'user', '[Review request: ' + instruction.split(':')[0] + ']\n' + work.substring(0,120) + (work.length>120?'…':''));
+  callAPI('guide', combined);
+}
+
+function clearAll() {
+  if (!confirm('Clear all chat histories?')) return;
+  ['task','paper','guide'].forEach(a => {
+    histories[a] = [];
+    ctxSent[a] = false;
+    msgCounts[a] = 0;
+    const chat = document.getElementById('chat-'+a);
+    chat.innerHTML = '';
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.id = 'empty-'+a;
+    const icons = {task:'🧠',paper:'📄',guide:'🛡️'};
+    const titles = {task:'Task Agent ready',paper:'Paper Maker ready',guide:'Supervisor ready'};
+    const subs = {task:'Click a quick task below or type your own.',paper:'Choose a section to write or describe what you need.',guide:'Paste work below and choose a review type.'};
+    empty.innerHTML = `<div class="empty-icon">${icons[a]}</div><div class="empty-title">${titles[a]}</div><div class="empty-sub">${subs[a]}</div>`;
+    chat.appendChild(empty);
+    document.getElementById('ctr-'+a).textContent = '0';
+    document.getElementById('ctr-'+a).classList.remove('has-msgs');
+    const badge = document.getElementById('ctx-'+a);
+    badge.className = 'ctx-badge';
+    badge.innerHTML = '<div class="ctx-dot"></div> Context pending';
+  });
+}
+
+['task','paper','guide'].forEach(agent => {
+  const ta = document.getElementById('in-'+agent);
+  if (ta) ta.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+});
+</script>
+</body>
+</html>
